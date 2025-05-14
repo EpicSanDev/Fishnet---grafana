@@ -84,12 +84,33 @@ echo "🔧 Configuration des permissions..."
 chmod +x "$EXPORTER_SCRIPT"
 echo "✅ Permissions configurées."
 
-# Arrêter les conteneurs existants si demandé
-if [ "$1" == "--restart" ] || [ "$1" == "-r" ]; then
-    echo "🛑 Arrêt des conteneurs existants..."
-    docker-compose -f "$DOCKER_COMPOSE" down
-    echo "✅ Conteneurs arrêtés."
-fi
+# Arrêter les conteneurs existants si demandé ou par défaut dans le mode distribué
+echo "🛑 Arrêt des conteneurs existants..."
+docker-compose -f "$DOCKER_COMPOSE" down
+echo "✅ Conteneurs arrêtés."
+
+# Mettre à jour l'URL de Prometheus dans la configuration Grafana
+echo "🔄 Mise à jour de la configuration de la source de données Grafana..."
+
+# Créer ou mettre à jour la configuration prometheus.yml pour Grafana
+cat > grafana/provisioning/datasources/prometheus.yml << EOF
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://$SERVER_IP:9090
+    isDefault: true
+    editable: true
+EOF
+
+echo "✅ URL de Prometheus mise à jour dans la configuration Grafana avec l'IP: $SERVER_IP"
+
+# Supprimer le dossier de données Grafana pour forcer une réinitialisation des datasources
+echo "🧹 Nettoyage du dossier de données Grafana pour appliquer les nouvelles configurations..."
+rm -rf grafana/data/*
+echo "✅ Dossier de données Grafana nettoyé."
 
 # Lancer l'infrastructure avec Docker Compose
 echo "🚀 Démarrage de l'infrastructure..."
@@ -116,21 +137,6 @@ else
 fi
 
 # L'adresse IP du serveur a déjà été récupérée plus tôt (SERVER_IP)
-
-# Mettre à jour l'URL de Prometheus dans la configuration Grafana
-echo "🔄 Mise à jour de la configuration de la source de données Grafana..."
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS
-    sed -i '' "s|url: http://prometheus:9090|url: http://$SERVER_IP:9090|g" grafana/provisioning/datasources/prometheus.yml
-else
-    # Linux
-    sed -i "s|url: http://prometheus:9090|url: http://$SERVER_IP:9090|g" grafana/provisioning/datasources/prometheus.yml
-fi
-if [ $? -eq 0 ]; then
-    echo "✅ URL de Prometheus mise à jour dans la configuration Grafana."
-else
-    echo "⚠️ Impossible de mettre à jour l'URL de Prometheus dans la configuration Grafana."
-fi
 
 echo ""
 echo "✅ Fishnet Monitoring Infrastructure (Distributed) est en cours d'exécution!"
