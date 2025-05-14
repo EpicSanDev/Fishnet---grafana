@@ -96,7 +96,28 @@ else
 fi
 
 # Récupérer l'adresse IP du serveur
-SERVER_IP=$(hostname -I | awk '{print $1}')
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    SERVER_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "127.0.0.1")
+else
+    # Linux
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+fi
+
+# Mettre à jour l'URL de Prometheus dans la configuration Grafana
+echo "🔄 Mise à jour de la configuration de la source de données Grafana..."
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    sed -i '' "s|url: http://prometheus:9090|url: http://$SERVER_IP:9090|g" grafana/provisioning/datasources/prometheus.yml
+else
+    # Linux
+    sed -i "s|url: http://prometheus:9090|url: http://$SERVER_IP:9090|g" grafana/provisioning/datasources/prometheus.yml
+fi
+if [ $? -eq 0 ]; then
+    echo "✅ URL de Prometheus mise à jour dans la configuration Grafana."
+else
+    echo "⚠️ Impossible de mettre à jour l'URL de Prometheus dans la configuration Grafana."
+fi
 
 echo ""
 echo "✅ Fishnet Monitoring Infrastructure (Distributed) est en cours d'exécution!"
