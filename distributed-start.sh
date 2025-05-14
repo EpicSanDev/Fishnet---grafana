@@ -51,7 +51,27 @@ echo "✅ Tous les fichiers nécessaires sont présents."
 # Copier le fichier prometheus-distributed.yml vers prometheus.yml
 echo "📋 Configuration de Prometheus..."
 cp "$PROMETHEUS_CONFIG" "$PROMETHEUS_TARGET"
-echo "✅ Fichier de configuration Prometheus copié."
+
+# Remplacer les noms d'hôtes internes par l'adresse IP dans la configuration de Prometheus
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS - Récupérer l'IP avant pour la substitution
+    SERVER_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "127.0.0.1")
+    
+    # Remplacer les noms d'hôtes par l'IP du serveur dans prometheus.yml
+    sed -i '' "s/targets: \['localhost:9090'\]/targets: \['$SERVER_IP:9090'\]/g" "$PROMETHEUS_TARGET"
+    sed -i '' "s/targets: \['node-exporter:9100'\]/targets: \['$SERVER_IP:9100'\]/g" "$PROMETHEUS_TARGET"
+    sed -i '' "s/targets: \['fishnet-stats-server:9101'\]/targets: \['$SERVER_IP:9101'\]/g" "$PROMETHEUS_TARGET"
+else
+    # Linux - Récupérer l'IP avant pour la substitution
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+    
+    # Remplacer les noms d'hôtes par l'IP du serveur dans prometheus.yml
+    sed -i "s/targets: \['localhost:9090'\]/targets: \['$SERVER_IP:9090'\]/g" "$PROMETHEUS_TARGET"
+    sed -i "s/targets: \['node-exporter:9100'\]/targets: \['$SERVER_IP:9100'\]/g" "$PROMETHEUS_TARGET"
+    sed -i "s/targets: \['fishnet-stats-server:9101'\]/targets: \['$SERVER_IP:9101'\]/g" "$PROMETHEUS_TARGET"
+fi
+
+echo "✅ Fichier de configuration Prometheus copié et URLs mises à jour avec l'IP du serveur: $SERVER_IP"
 
 # Vérifier si les répertoires de data existent, sinon les créer
 echo "📁 Vérification des répertoires de données..."
@@ -95,14 +115,7 @@ else
     echo "   docker-compose -f $DOCKER_COMPOSE logs"
 fi
 
-# Récupérer l'adresse IP du serveur
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS
-    SERVER_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "127.0.0.1")
-else
-    # Linux
-    SERVER_IP=$(hostname -I | awk '{print $1}')
-fi
+# L'adresse IP du serveur a déjà été récupérée plus tôt (SERVER_IP)
 
 # Mettre à jour l'URL de Prometheus dans la configuration Grafana
 echo "🔄 Mise à jour de la configuration de la source de données Grafana..."
