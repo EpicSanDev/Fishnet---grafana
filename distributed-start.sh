@@ -57,6 +57,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS - Récupérer l'IP avant pour la substitution
     SERVER_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "127.0.0.1")
     
+    # Copier le fichier de configuration original
+    cp "$PROMETHEUS_CONFIG" "$PROMETHEUS_TARGET"
+    
     # Remplacer les noms d'hôtes par l'IP du serveur dans prometheus.yml
     sed -i '' "s/targets: \['localhost:9090'\]/targets: \['$SERVER_IP:9090'\]/g" "$PROMETHEUS_TARGET"
     sed -i '' "s/targets: \['node-exporter:9100'\]/targets: \['$SERVER_IP:9100'\]/g" "$PROMETHEUS_TARGET"
@@ -64,6 +67,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 else
     # Linux - Récupérer l'IP avant pour la substitution
     SERVER_IP=$(hostname -I | awk '{print $1}')
+    
+    # Copier le fichier de configuration original
+    cp "$PROMETHEUS_CONFIG" "$PROMETHEUS_TARGET"
     
     # Remplacer les noms d'hôtes par l'IP du serveur dans prometheus.yml
     sed -i "s/targets: \['localhost:9090'\]/targets: \['$SERVER_IP:9090'\]/g" "$PROMETHEUS_TARGET"
@@ -106,6 +112,31 @@ datasources:
 EOF
 
 echo "✅ URL de Prometheus mise à jour dans la configuration Grafana avec l'IP: $SERVER_IP"
+
+# S'assurer que le chemin des dashboards est correct
+echo "🔄 Mise à jour de la configuration des dashboards Grafana..."
+cat > grafana/provisioning/dashboards/fishnet.yml << EOF
+apiVersion: 1
+
+providers:
+  - name: 'Fishnet'
+    orgId: 1
+    folder: 'Fishnet'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+EOF
+
+# Copier les fichiers de dashboard
+echo "📋 Copie des dashboards..."
+mkdir -p grafana/dashboards
+cp -f grafana/provisioning/dashboards/dashboards/*.json grafana/dashboards/ 2>/dev/null || true
+
+echo "✅ Configuration des dashboards mise à jour"
 
 # Supprimer le dossier de données Grafana pour forcer une réinitialisation des datasources
 echo "🧹 Nettoyage du dossier de données Grafana pour appliquer les nouvelles configurations..."
