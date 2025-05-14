@@ -1,0 +1,22 @@
+servers:
+  - name: lichess-main
+    url: https://lichess.org/fishnet/status
+    key: YOUR_API_KEY_HERE
+  # Vous pouvez ajouter d'autres serveurs Fishnet ici
+  # - name: lichess-secondary
+  #   url: https://second-instance.example.com/api/fishnet/status
+  #   key: YOUR_SECOND_API_KEY_HERE
+
+exporter:
+  port: 9101
+  scrape_interval: 60  # en secondes
+  
+# Configuration pour le serveur central de métriques
+metrics_server:
+  enabled: true
+  # Mode: 'central' pour le serveur central, 'client' pour les serveurs qui envoient leurs données
+  mode: 'central'  
+  # URL du serveur central (seulement utilisé en mode 'client')
+  central_url: 'http://stats-server:9101/metrics/push'  
+  # Clé d'authentification pour sécuriser la communication (optionnel)
+  auth_key: 'votre_cle_secrete'

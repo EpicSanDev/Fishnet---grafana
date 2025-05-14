@@ -1,0 +1,15 @@
+# Configuration pour le serveur central de métriques Fishnet
+servers:
+  - name: lichess-main
+    url: https://lichess.org/fishnet/status
+    key: YOUR_API_KEY_HERE
+
+exporter:
+  port: 9101
+  scrape_interval: 60  # en secondes
+  
+# Configuration pour le serveur central de métriques
+metrics_server:
+  enabled: true
+  mode: 'central'  # Mode central pour recevoir les métriques des clients
+  auth_key: 'votre_cle_secrete'  # Clé d'authentification

@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - 'alert_rules.yml'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # Configurer un alertmanager ici si nécessaire
+          # - 'alertmanager:9093'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  - job_name: 'fishnet-stats-server'
+    static_configs:
+      - targets: ['fishnet-stats-server:9101']
+    scrape_interval: 10s
+    # Ne pas scraper les clients individuels, toutes les métriques sont consolidées sur le serveur central

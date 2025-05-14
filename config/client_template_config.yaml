@@ -1,0 +1,16 @@
+# Configuration pour un client Fishnet
+servers:
+  - name: fishnet-server-NODE_ID
+    url: https://lichess.org/fishnet/status
+    key: YOUR_API_KEY_HERE
+
+exporter:
+  port: 9102
+  scrape_interval: 60  # en secondes
+  
+# Configuration pour le client qui envoie ses métriques au serveur central
+metrics_server:
+  enabled: true
+  mode: 'client'  # Mode client pour envoyer les métriques au serveur central
+  central_url: 'http://CENTRAL_SERVER_IP:9101/metrics/push'  # URL du serveur central
+  auth_key: 'votre_cle_secrete'  # Clé d'authentification - doit correspondre à celle du serveur central

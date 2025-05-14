@@ -1,0 +1,38 @@
+groups:
+- name: fishnet_alerts
+  rules:
+  - alert: FishnetServerDown
+    expr: fishnet_up == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Fishnet server down ({{ $labels.instance }})"
+      description: "Le serveur Fishnet {{ $labels.instance }} est injoignable depuis plus de 5 minutes."
+
+  - alert: FishnetHighQueueLoad
+    expr: sum by(instance) (fishnet_jobs_queued) > 100
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Charge élevée dans la file d'attente ({{ $labels.instance }})"
+      description: "Plus de 100 jobs dans la file d'attente sur {{ $labels.instance }} depuis plus de 10 minutes."
+
+  - alert: FishnetLowNodeCount
+    expr: fishnet_nodes_total < 5
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Nombre faible de nœuds connectés ({{ $labels.instance }})"
+      description: "Moins de 5 nœuds sont connectés à {{ $labels.instance }} depuis plus de 15 minutes."
+
+  - alert: FishnetAnalysisRateDrop
+    expr: fishnet_analyses_per_second < 1
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Baisse du taux d'analyse ({{ $labels.instance }})"
+      description: "Le taux d'analyse est inférieur à 1/seconde sur {{ $labels.instance }} depuis plus de 15 minutes."
